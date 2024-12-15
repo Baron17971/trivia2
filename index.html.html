@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+  <title>משחק טריוויה חנוכה</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #1a237e;
+      text-align: center;
+      color: #ffffff;
+    }
+    
+    .container {
+      background: #283593;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      color: #fff;
+      margin-bottom: 30px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    #question {
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    .answer-button {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      margin: 10px 0;
+      background-color: #5c6bc0;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .answer-button:hover {
+      background-color: #3f51b5;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    #timer {
+      font-size: 20px;
+      margin: 20px 0;
+      color: #ffd700;
+      font-weight: bold;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    #hint {
+      color: #81d4fa;
+      cursor: pointer;
+      margin: 15px 0;
+      text-decoration: underline;
+      font-size: 16px;
+      transition: color 0.3s ease;
+    }
+
+    #hint:hover {
+      color: #4fc3f7;
+    }
+
+    #hint-text {
+      color: #b2ff59;
+      margin: 10px 0;
+      font-style: italic;
+      display: none;
+    }
+
+    #nextButton {
+      background-color: #00e676;
+      color: #000;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 20px;
+      transition: all 0.3s ease;
+      font-weight: bold;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    #nextButton:hover {
+      background-color: #00c853;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    .score-display {
+      font-size: 18px;
+      margin: 20px 0;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 10px;
+      background-color: #3949ab;
+      border-radius: 5px;
+      margin: 20px 0;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .progress {
+      height: 100%;
+      background-color: #00e676;
+      border-radius: 5px;
+      transition: width 0.3s ease;
+    }
+
+    .best-score {
+      font-size: 16px;
+      color: #b3e5fc;
+      margin-top: 10px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>משחק טריוויה חנוכה</h1>
+    
+    <div class="progress-bar">
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <div class="score-display">ניקוד: <span id="currentScore">0</span></div>
+    <div class="best-score">שיא נוכחי במשחק: <span id="bestScore">0</span></div>
+    <div id="timer"></div>
+    <div id="question"></div>
+    <div id="hint">לחץ לרמז</div>
+    <div id="hint-text"></div>
+    <div id="answers"></div>
+    <button id="nextButton">שאלה הבאה</button>
+  </div>
+
+  <script>
+    // Get DOM elements first
+    const questionElement = document.getElementById("question");
+    const answersElement = document.getElementById("answers");
+    const nextButton = document.getElementById("nextButton");
+    const timerElement = document.getElementById("timer");
+    const hintElement = document.getElementById("hint");
+    const hintTextElement = document.getElementById("hint-text");
+    const currentScoreElement = document.getElementById("currentScore");
+    const progressElement = document.getElementById("progress");
+    const bestScoreElement = document.getElementById("bestScore");
+
+    const questionBank = {
+      easy: [
+        {
+          question: "איזה חג נקרא גם 'חג האורים'?",
+          answers: ["פורים", "חנוכה", "פסח", "שבועות"],
+          correct: 1,
+          hint: "קשור להדלקת נרות",
+          difficulty: "קל",
+          points: 10
+        },
+        {
+          question: "מה מברכים על נרות חנוכה?",
+          answers: ["ברכה אחת", "שתי ברכות", "שלוש ברכות", "ארבע ברכות"],
+          correct: 2,
+          hint: "בלילה הראשון יש ברכה מיוחדת נוספת",
+          difficulty: "קל",
+          points: 10
+        },
+        {
+          question: "איזה משחק מסורתי משחקים בחנוכה?",
+          answers: ["קלפים", "סביבון", "מחבואים", "חבל"],
+          correct: 1,
+          hint: "משחק עם אותיות מיוחדות",
+          difficulty: "קל",
+          points: 10
+        },
+        {
+          question: "מה הטעם המסורתי של סופגניות?",
+          answers: ["תות", "שוקולד", "ריבת חלב", "ריבת תפוחים"],
+          correct: 0,
+          hint: "פרי אדום",
+          difficulty: "קל",
+          points: 10
+        },
+        {
+          question: "מתי מדליקים נרות חנוכה?",
+          answers: ["בבוקר", "בצהריים", "אחרי השקיעה", "בחצות"],
+          correct: 2,
+          hint: "כשמחשיך בחוץ",
+          difficulty: "קל",
+          points: 10
+        },
+        {
+          question: "כמה נרות מדליקים בלילה הראשון של חנוכה?",
+          answers: ["1", "2", "3", "8"],
+          correct: 0,
+          hint: "מתחילים מהמעט",
+          difficulty: "קל",
+          points: 10
+        },
+        {
+          question: "מהו המאכל המסורתי העשוי מתפוחי אדמה?",
+          answers: ["סופגניות", "לביבות", "מצות", "אוזני המן"],
+          correct: 1,
+          hint: "מטוגן ועשוי מתפוחי אדמה",
+          difficulty: "קל",
+          points: 10
+        },
+        {
+          question: "באיזה צד של הפתח מניחים את החנוכייה?",
+          answers: ["ימין", "שמאל", "באמצע", "על הרצפה"],
+          correct: 1,
+          hint: "בצד ההפוך מהמזוזה",
+          difficulty: "קל",
+          points: 10
+        },
+        {
+          question: "איזה צבע נר משמש כשמש?",
+          answers: ["כחול", "אדום", "לבן", "צהוב"],
+          correct: 2,
+          hint: "צבע בסיסי ונפוץ",
+          difficulty: "קל",
+          points: 10
+        },
+        {
+          question: "באיזה חודש עברי חוגגים את חנוכה?",
+          answers: ["חשוון", "כסלו", "טבת", "שבט"],
+          correct: 1,
+          hint: "החודש התשיעי בלוח העברי",
+          difficulty: "קל",
+          points: 10
+        }
+      ],
+      medium: [
+        {
+          question: "כמה לוחמים היו במרד החשמונאים בתחילת דרכם?",
+          answers: ["6", "12", "24", "36"],
+          correct: 1,
+          hint: "כמניין השבטים",
+          difficulty: "בינוני",
+          points: 20
+        },
+        {
+          question: "מה היה הכינוי של אנטיוכוס הרביעי?",
+          answers: ["הגדול", "אפיפנס", "הרשע", "המשוגע"],
+          correct: 1,
+          hint: "משמעותו 'המתגלה'",
+          difficulty: "בינוני",
+          points: 20
+        },
+        {
+          question: "מה היה שמה של אם שבעת הבנים?",
+          answers: ["חנה", "מרים", "שרה", "רחל"],
+          correct: 0,
+          hint: "שם שמתחיל באות ח'",
+          difficulty: "בינוני",
+          points: 20
+        },
+        {
+          question: "איזה בית מקדש טיהרו החשמונאים?",
+          answers: ["ראשון", "שני", "שלישי", "רביעי"],
+          correct: 1,
+          hint: "נבנה בימי עזרא ונחמיה",
+          difficulty: "בינוני",
+          points: 20
+        },
+        {
+          question: "מה היה תפקיד השמש בחנוכייה?",
+          answers: ["לקשט", "להאיר את החדר", "להדליק את שאר הנרות", "סתם למסורת"],
+          correct: 2,
+          hint: "משרת את שאר הנרות",
+          difficulty: "בינוני",
+          points: 20
+        },
+        {
+          question: "כמה ימים נמשך נס פך השמן?",
+          answers: ["3", "5", "7", "8"],
+          correct: 3,
+          hint: "כמספר ימי החג",
+          difficulty: "בינוני",
+          points: 20
+        },
+        {
+          question: "מי היה מנהיג המרד נגד היוונים?",
+          answers: ["יהודה המכבי", "שמעון בר כוכבא", "דוד המלך", "משה רבנו"],
+          correct: 0,
+          hint: "בן למשפחת החשמונאים",
+          difficulty: "בינוני",
+          points: 20
+        },
+        {
+          question: "מה היה שמו המקורי של יהודה המכבי?",
+          answers: ["יהודה בן מתתיהו", "יהודה החשמונאי", "יהודה בן יוחנן", "יהודה המקבת"],
+          correct: 0,
+          hint: "שם אביו היה מתתיהו",
+          difficulty: "בינוני",
+          points: 20
+        },
+        {
+          question: "מדוע נקרא החג 'חנוכה'?",
+          answers: ["על שם החניה ממלחמות", "על שם חנוכת המקדש", "על שם הנס", "על שם המכבים"],
+          correct: 1,
+          hint: "קשור לטיהור בית המקדש",
+          difficulty: "בינוני",
+          points: 20
+        },
+        {
+          question: "איזה מלך יווני גזר גזירות על היהודים?",
+          answers: ["אלכסנדר מוקדון", "אנטיוכוס הרביעי", "תלמי", "פיליפוס"],
+          correct: 1,
+          hint: "כונה 'אפיפנס'",
+          difficulty: "בינוני",
+          points: 20
+        }
+      ],
+      hard: [
+        {
+          question: "מה היה שם העיר בה החל מרד החשמונאים?",
+          answers: ["ירושלים", "מודיעין", "יבנה", "צפת"],
+          correct: 1,
+          hint: "עיר כהנים קדומה",
+          difficulty: "מאתגר",
+          points: 30
+        },
+        {
+          question: "מה היה משקל פך השמן המקורי?",
+          answers: ["רביעית הלוג", "חצי לוג", "לוג שלם", "שני לוגים"],
+          correct: 0,
+          hint: "המידה הקטנה ביותר",
+          difficulty: "מאתגר",
+          points: 30
+        },
+        {
+          question: "מי היה אחיו הצעיר של יהודה המכבי?",
+          answers: ["יונתן", "שמעון", "אלעזר", "יוחנן"],
+          correct: 0,
+          hint: "המשיך את שושלת החשמונאים",
+          difficulty: "מאתגר",
+          points: 30
+        },
+        {
+          question: "באיזו שנה נחנך מחדש בית המקדש?",
+          answers: ["165 לפנה\"ס", "164 לפנה\"ס", "163 לפנה\"ס", "162 לפנה\"ס"],
+          correct: 1,
+          hint: "שלוש שנים אחרי תחילת המרד",
+          difficulty: "מאתגר",
+          points: 30
+        },
+        {
+          question: "איזה אירוע היסטורי התרחש בכ\"ה בכסלו לפני נס חנוכה?",
+          answers: ["חנוכת המשכן", "חנוכת בית ראשון", "הקמת המזבח הראשון", "חנוכת חומות ירושלים"],
+          correct: 2,
+          hint: "קשור למזבח",
+          difficulty: "מאתגר",
+          points: 30
+        },
+        {
+          question: "מה פירוש המילה 'חשמונאי'?",
+          answers: ["כהן גדול", "לוחם אמיץ", "משמן (שמן)", "צאצא של חשמון"],
+          correct: 3,
+          hint: "קשור לשם המשפחה המקורי",
+          difficulty: "מאתגר",
+          points: 30
+        },
+        {
+          question: "מה היה תפקידו של מתתיהו לפני המרד?",
+          answers: ["כהן בירושלים", "כהן במודיעין", "מלך", "סוחר"],
+          correct: 1,
+          hint: "שירת כאיש דת בעיר מגוריו",
+          difficulty: "מאתגר",
+          points: 30
+        },
+        {
+          question: "באיזו שנה אירע מרד החשמונאים?",
+          answers: ["167 לפנה\"ס", "186 לפנה\"ס", "145 לפנה\"ס", "132 לפנה\"ס"],
+          correct: 0,
+          hint: "במאה השנייה לפני הספירה",
+          difficulty: "מאתגר",
+          points: 30
+        },
+        {
+          question: "מהי משמעות הכינוי 'מכבי'?",
+          answers: ["מכה בכוח", "מי כמוך באלים ה'", "מגן כבוד ישראל", "מורד בשליט יווני"],
+          correct: 1,
+          hint: "ראשי תיבות של פסוק",
+          difficulty: "מאתגר",
+          points: 30
+        },
+        {
+          question: "כמה בנים היו למתתיהו?",
+          answers: ["3", "4", "5", "6"],
+          correct: 2,
+          hint: "כמספר הספרות בגימטריה של המילה 'מכבי'",
+          difficulty: "מאתגר",
+          points: 30
+        }
+      ]
+    };
+
+    function selectRandomQuestions() {
+      const numQuestions = 10;
+      const selectedQuestions = [];
+      
+      // בחירת 4 שאלות קלות
+      const easyQuestions = [...questionBank.easy];
+      for (let i = 0; i < 4; i++) {
+        const randomIndex = Math.floor(Math.random() * easyQuestions.length);
+        selectedQuestions.push(easyQuestions.splice(randomIndex, 1)[0]);
+      }
+      
+      // בחירת 3 שאלות בינוניות
+      const mediumQuestions = [...questionBank.medium];
+      for (let i = 0; i < 3; i++) {
+        const randomIndex = Math.floor(Math.random() * mediumQuestions.length);
+        selectedQuestions.push(mediumQuestions.splice(randomIndex, 1)[0]);
+      }
+      
+      // בחירת 3 שאלות קשות
+      const hardQuestions = [...questionBank.hard];
+      for (let i = 0; i < 3; i++) {
+        const randomIndex = Math.floor(Math.random() * hardQuestions.length);
+        selectedQuestions.push(hardQuestions.splice(randomIndex, 1)[0]);
+      }
+      
+      // ערבוב סופי של השאלות
+      return selectedQuestions.sort(() => Math.random() - 0.5);
+    }
+
+    const questions = selectRandomQuestions();
+
+    let currentQuestion = 0;
+    let score = 0;
+    let bestScore = 0;
+    let timeLeft = 15;
+    let timerInterval;
+
+    function displayQuestion() {
+      const question = questions[currentQuestion];
+      questionElement.textContent = question.question;
+      answersElement.innerHTML = "";
+      hintTextElement.style.display = "none";
+      hintTextElement.textContent = question.hint;
+      
+      const progress = (currentQuestion / questions.length) * 100;
+      progressElement.style.width = progress + "%";
+
+      for (let i = 0; i < question.answers.length; i++) {
+        const button = document.createElement("button");
+        button.textContent = question.answers[i];
+        button.classList.add("answer-button");
+        button.addEventListener("click", () => checkAnswer(i));
+        answersElement.appendChild(button);
+      }
+
+      startTimer();
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timeLeft = 15;
+      updateTimer();
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimer();
+        if (timeLeft === 0) {
+          clearInterval(timerInterval);
+          checkAnswer(-1);
+        }
+      }, 1000);
+    }
+
+    function updateTimer() {
+      timerElement.textContent = timeLeft + " שניות";
+      timerElement.style.color = "#ffd700";
+    }
+
+    function checkAnswer(index) {
+      clearInterval(timerInterval);
+      const question = questions[currentQuestion];
+      const buttons = document.querySelectorAll(".answer-button");
+      
+      buttons.forEach((button, i) => {
+        button.disabled = true;
+        if (i === question.correct) {
+          button.style.backgroundColor = "#27ae60";
+        } else if (i === index && index !== question.correct) {
+          button.style.backgroundColor = "#e74c3c";
+        }
+      });
+
+      if (index === question.correct) {
+        score += question.points;
+        currentScoreElement.textContent = score;
+        if (score > bestScore) {
+          bestScore = score;
+          bestScoreElement.textContent = bestScore;
+        }
+        setTimeout(() => alert(`נכון! קיבלת ${question.points} נקודות! (שאלה ברמה ${question.difficulty})`), 500);
+      } else if (index === -1) {
+        setTimeout(() => alert("נגמר הזמן!"), 500);
+      } else {
+        setTimeout(() => alert("לא נכון. התשובה הנכונה היא " + question.answers[question.correct]), 500);
+      }
+
+      setTimeout(() => {
+        currentQuestion++;
+        if (currentQuestion < questions.length) {
+          displayQuestion();
+        } else {
+          endGame();
+        }
+      }, 1500);
+    }
+
+    function showHint() {
+      hintTextElement.style.display = "block";
+      if (timeLeft > 5) {
+        timeLeft -= 5;
+        updateTimer();
+      }
+    }
+
+    function endGame() {
+      const finalMessage = score > bestScore 
+        ? `כל הכבוד! שברת את השיא הקודם (${bestScore}) עם ${score} נקודות!` 
+        : `סיימת את המשחק עם ${score} נקודות. השיא הנוכחי הוא ${bestScore}.`;
+
+      questionElement.innerHTML = `
+        <h2>המשחק הסתיים!</h2>
+        <p>${finalMessage}</p>
+        <button onclick="location.reload()" class="answer-button" style="background-color: #2ecc71;">
+          שחק שוב
+        </button>
+      `;
+      
+      answersElement.innerHTML = "";
+      nextButton.style.display = "none";
+      timerElement.style.display = "none";
+      hintElement.style.display = "none";
+      hintTextElement.style.display = "none";
+    }
+
+    // Event Listeners
+    hintElement.addEventListener("click", showHint);
+    
+    nextButton.addEventListener("click", () => {
+      currentQuestion++;
+      if (currentQuestion < questions.length) {
+        displayQuestion();
+      } else {
+        endGame();
+      }
+    });
+
+    // Start the game
+    displayQuestion();
+  </script>
+</body>
+</html>
